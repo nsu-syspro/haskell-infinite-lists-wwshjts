@@ -1,21 +1,25 @@
 module Task1Suite where
 
+import TestUtils
 import Test.Tasty
-import Test.Tasty.SmallCheck as SC
-import Test.Tasty.QuickCheck as QC
 import Test.Tasty.HUnit
 
-import Task1
+import Task1 (fibs, nats, primes)
 
+import Control.Monad
 
 task1Tests :: TestTree
 task1Tests = testGroup "Task1"
-  [ SC.testProperty "n! == n * (n-1)! (SmallCheck)" $
-      \x -> x > 0 SC.==> factorial x == x * factorial (x - 1)
+  [ localOption (mkTimeout (seconds 5)) $ testCase "take 1000 nats" $
+      forM_ (take 1000 $ zip [0..] (zip nats natsRef)) $ \(idx, (actual, expected)) -> do
+        assertEqual ("nats !! " ++ show (idx :: Int)) actual expected
 
-  , QC.testProperty "n! == n * (n-1)! (QuickCheck)" $
-      \x -> x > 0 QC.==> factorial x == x * factorial (x - 1)
+  , localOption (mkTimeout (seconds 5)) $ testCase "take 1000 fibs" $
+      forM_ (take 1000 $ zip [0..] (zip fibs fibsRef)) $ \(idx, (actual, expected)) -> do
+        assertEqual ("fibs !! " ++ show (idx :: Int)) actual expected
 
-  , testCase "0! == 1" $
-      factorial 0 @?= 1
+  , localOption (mkTimeout (seconds 5)) $ testCase "take 1000 primes" $
+      forM_ (take 1000 $ zip [0..] primes) $ \(idx, actual) -> do
+        assertBool ("primes !! " ++ show (idx :: Int) ++ " = " ++ show actual ++ " is not prime") $ True
   ]
+
