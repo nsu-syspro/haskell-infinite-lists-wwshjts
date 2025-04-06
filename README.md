@@ -87,23 +87,23 @@ creating and manipulating infinite sequences.
 There are countless ways to obtain infinite sequences in Haskell,
 even just using standard `Prelude`.
 
-For example, to get infinite list of natural numbers you can:
+For example, to get infinite list of natural numbers you can
 
-- Use built-in list generators
+- use built-in list generators
   ```haskell
   nats = [1..]
   ```
-- Use [iterate](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:iterate) from `Prelude`
+- use [iterate](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:iterate) from `Prelude`
   ```haskell
   nats = iterate succ 1
   ```
-- Use recursion with [map](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:map)
+- use recursion with [map](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:map)
   ```haskell
   nats = 1 : map succ nats
   ```
-- Or more elaborate combination of built-in functions
+- or more elaborate combination of built-in functions
   (in this case [zipWith](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:zipWith)
-  and [repeat](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:zipWith))
+  and [repeat](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:repeat))
   ```haskell
   nats = 1 : zipWith (+) (repeat 1) nats
   ```
@@ -159,27 +159,27 @@ Your goal is to implement using `unfoldr` following infinite sequences:
 > [!NOTE]
 >
 > Typically Sieve of Eratosthenes is used to produce primes up to a fixed limit.
-> However, in Haskell we can easily extend its idea to generate infinite list of all
+> However, in Haskell we can easily extend this idea to generate infinite list of all
 > prime numbers.
 >
 > Take a look at `sieve` function in [src/Task1.hs](src/Task1.hs) to get
-> an idea of how to accomplish this (and then implement `primes` using it).
+> a clue for how to accomplish this (and then implement `primes` with `sieve`).
 
 ## Task 2 (4 points)
 
 You may have noticed that we don't ever need to return `Nothing` in `unfoldr`
-when defining infinite lists. So `Maybe` wrapper in function to `unfoldr`
+when defining infinite lists. So `Maybe` wrapper in step function of `unfoldr`
 is redundant for our purposes.
 
 We can make our intentions more explicit by defining a type that can only
-encode infinite sequences:
+represent infinite sequences:
 
 ```haskell
 -- | Infinite stream of elements
 data Stream a = Stream a (Stream a)
 ```
 
-For such type `unfold` function could be simplified by removing `Maybe` from step function
+For such type `unfold` function could be simplified by removing `Maybe` from step function:
 
 ```haskell
 unfold :: (b -> (a, b)) -> b -> Stream a
@@ -282,7 +282,7 @@ numbers, but in very unusual way --- using [generating functions](https://en.wik
 For example, we can get infinite constant sequence $1, 1, 1, 1, ...$ as coefficients of geometric series:
 
 ```math
-\sum^{\infty}_{n = 0} x ^ n = \frac{1}{1 - x}
+\frac{1}{1 - x} = \sum^{\infty}_{n = 0} x ^ n = 1 + 1 x + 1 x^2 + ...
 ```
 
 Moreover, such generating functions exist for both natural numbers and Fibonacci numbers (sadly not for prime numbers).
@@ -299,7 +299,7 @@ as `Stream` of coefficients $[a_0, a_1, a_2, ..., a_n, ...]$ completely ignoring
 since we are only interested in the sequence produced by coefficients, not the value of
 generating function itself. With this representation we could define all necessary
 numerical operations to write formula like $\frac{1}{1 - x}$ where $1$, $x$ and
-the whole formula have the type `Stream Integer`, yielding desired sequence in the end.
+the whole formula have underlying type `Stream Integer`, thus yielding desired sequence in the end.
 
 ### Series
 
@@ -331,22 +331,35 @@ Along with following examples of expected usage:
 However, for these examples to work you will need to
 make more preparations.
 
-As part of our [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) for
+### $x$
+
+To start off, as part of our [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) for
 describing power series, you need to implement function `x` which returns
-`Series` corresponding to single $x$ ($a_1 = 1$ and the rest $a_i = 0$):
+`Series` corresponding to single $x$:
 
 ```haskell
 x :: Num a => Series a
 ```
 
+For that you should use following equality:
+
+```math
+x = 0 + 1 x + 0 x^2 + ...
+```
+
+Which corresponds to coefficients `[0,1,0,0,...]`.
+
 ### Num
 
 Now you need to make `Series a` an instance of type class `Num` assuming
-that `a` is also `Num`. For that you should implement
+that `a` is also `Num`. For that you should implement following methods:
 
-- Function `fromInteger` that converts `Integer` to `Series` using the following
-  equality: $n = n + 0 x + 0 x^2 + ...$
-- Function `negate` that negates all coefficients
+- `fromInteger` that converts `Integer` to `Series` using the following
+  equality:
+```math
+n = n + 0 x + 0 x^2 + ...
+```
+- `negate` that negates all coefficients
 - Addition `(+)` which for infinite power series is just a matter of adding
   corresponding coefficients:  
 ```math
@@ -365,12 +378,12 @@ AB &= (a_0 + xA')B \\
    &= a_0 b_0 + x (a_0 B' + A' B)
 \end{aligned}
 ```
-- Lastly, there are functions `abs` and `signum`, which we will not really need for
+- Lastly, there are functions `abs` and `signum`, which will not be really needed for
   this task. So you can implement them in any way you want, as long as it satisfies
   their [law](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:signum)
   as defined in documentation:
   ```haskell
-  abs x * signum x == x
+  abs a * signum a == a
   ```
 
 You will definitely find it helpful to also implement a utility operator for multiplying
@@ -401,7 +414,7 @@ To be able to produce required generating functions like geometric series $\frac
 we should be able to divide `Series`. There are two built-in division functions
 in Haskell: `div` from type class `Integral` and `(/)` from type class `Fractional`.
 
-Although we will only work with evenly divisible coefficients it is better to define
+Although we will only work with evenly divisible coefficients, it is better to define
 full `Fractional` instance for `Series a` assuming that `a` is also `Fractional`.
 
 Type class `Fractional` has only two methods:
@@ -489,10 +502,10 @@ Implement function `nats` using following generating function for natural number
 Lastly, implement function `fibs` using following generating function for Fibonacci numbers
 
 ```math
-\frac{1}{1 - x - x^2} = F_0 + F_1 x + F_2 x ^ 2 + ...
+\frac{x}{1 - x - x^2} = F_0 + F_1 x + F_2 x ^ 2 + ...
 ```
 
-where $F_0 = F_1 = 1$ and $F_i = F_{i - 1} + F_{i -2}$ for $i \geq 2$
+where $F_0 = 0$, $F_1 = 1$ and $F_i = F_{i - 1} + F_{i -2}$ for $i \geq 2$
 
 You should first try to prove this equation yourself, but if you get stuck,
 take a look at the sketch of the proof below.
@@ -508,7 +521,7 @@ Notice that $x + x F(x) + x^2 F(x) = F(x)$ by definition of Fibonacci coefficien
 Now it is just a matter of rearranging the terms:
 
 - $x = F(x) - x F(x) - x^2 F(x)$
-- $F(x) = \frac{1}{1 - x - x^2}$
+- $F(x) = \frac{x}{1 - x - x^2}$
 
 <div align=right>∎</div>
 
