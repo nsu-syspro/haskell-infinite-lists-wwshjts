@@ -68,5 +68,3 @@ isPrime :: Integer -> Bool
 isPrime n
   | n < 2     = False
   | otherwise = null [ x | x <- [2 .. (floor :: Double -> Integer). sqrt . fromIntegral $ n], n `mod` x == 0 ]
-
-
