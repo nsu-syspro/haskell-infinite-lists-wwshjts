@@ -2,12 +2,20 @@
 -- The above pragma enables all warnings
 
 module Task2 where
+import Data.Foldable (toList)
+
 
 -- | Infinite stream of elements
 data Stream a = Stream a (Stream a)
 
 instance Foldable Stream where
   foldMap f (Stream x xs) = f x <> foldMap f xs
+
+instance Functor Stream where
+    fmap f (Stream x xs) = Stream (f x) (fmap f xs)
+
+instance Show a => Show (Stream a) where
+    show s = "First ten elements of stream: " ++ (show . take 10 . toList $ s) ++ "\n"  
 
 -- | Converts given list into stream
 --
@@ -48,6 +56,9 @@ unfold f acc =
 
 tail' :: Stream a -> Stream a
 tail' (Stream _ xs) = xs
+
+mix :: (a -> b -> c) -> Stream a -> Stream b -> Stream c
+mix f (Stream x xs) (Stream y ys) = Stream (f x y) (mix f xs ys)
 
 -- | Returns infinite stream of natural numbers (excluding zero)
 --

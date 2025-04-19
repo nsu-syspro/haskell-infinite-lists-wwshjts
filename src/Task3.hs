@@ -3,7 +3,7 @@
 
 module Task3 where
 
-import Task2 (Stream)
+import Task2 hiding (nats, primes, fibs)
 import Data.Ratio (Ratio)
 
 -- | Power series represented as infinite stream of coefficients
@@ -39,8 +39,29 @@ newtype Series a = Series
 -- >>> coefficients x
 -- [0,1,0,0,0,0,0,0,0,0]
 --
+
+instance Num a => Num (Series a) where
+    (Series xs) + (Series ys) = Series (mix (+) xs ys)
+
+    (Series (Stream a0 as)) * l@(Series (Stream b0 bs)) =
+        fromNumber (a0 * b0) + shiftRight (mul + Series as * l)
+        where
+            mul = a0 *: Series bs 
+
+    abs    (Series xs) = Series (abs    <$> xs)
+    signum (Series xs) = Series (signum <$> xs)
+    negate (Series xs) = Series (negate <$> xs)
+    fromInteger n = Series (fromList 0 [fromInteger n])
+
 x :: Num a => Series a
-x = error "TODO: define x"
+x =  Series (fromList 0 [0, 1])
+
+fromNumber :: Num a => a -> Series a
+fromNumber n = Series (fromList 0 [n])
+
+shiftRight :: Num a => Series a -> Series a
+shiftRight (Series xs) = Series (Stream 0 xs)
+
 
 -- | Multiplies power series by given number
 -- 
@@ -58,7 +79,7 @@ x = error "TODO: define x"
 --
 infixl 7 *:
 (*:) :: Num a => a -> Series a -> Series a
-(*:) = error "TODO: define (*:)"
+(*:) n (Series xs) = Series ((*) n <$> xs)
 
 -- | Helper function for producing integer
 -- coefficients from generating function
