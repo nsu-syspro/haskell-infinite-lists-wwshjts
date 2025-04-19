@@ -46,6 +46,9 @@ unfold f acc =
         acc' = snd . f $ acc
     in Stream next (unfold f acc')
 
+tail' :: Stream a -> Stream a
+tail' (Stream _ xs) = xs
+
 -- | Returns infinite stream of natural numbers (excluding zero)
 --
 -- First 10 natural numbers:
@@ -54,7 +57,7 @@ unfold f acc =
 -- [1,2,3,4,5,6,7,8,9,10]
 --
 nats :: Stream Integer
-nats = unfold(\x -> (x, succ x)) 1
+nats = unfold (\x -> (x, succ x)) 1
 
 -- | Returns infinite stream of fibonacci numbers (starting with zero)
 --
@@ -74,7 +77,8 @@ fibs = unfold (\(u, v) -> (u, (v, u + v))) (0, 1)
 -- [2,3,5,7,11,13,17,19,23,29]
 --
 primes :: Stream Integer
-primes = unfold sieve nats 
+primes = unfold sieve' (tail' nats)
+    where sieve' (Stream p xs) = (p, strikeOut p xs)  
 
 -- | One step of Sieve of Eratosthenes
 -- (to be used with 'unfoldr')
@@ -109,5 +113,3 @@ isPrime :: Integer -> Bool
 isPrime n
   | n < 2     = False
   | otherwise = null [ x | x <- [2 .. (floor :: Double -> Integer). sqrt . fromIntegral $ n], n `mod` x == 0 ]
-
-
