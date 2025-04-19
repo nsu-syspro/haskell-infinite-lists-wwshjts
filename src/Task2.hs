@@ -54,11 +54,28 @@ unfold f acc =
         acc' = snd . f $ acc
     in Stream next (unfold f acc')
 
+-- | Skips first element of stream 
+--
+-- Example
+-- >>> (tail' . unfold) (\x -> abs x, x-1)) 5
+-- [4,3,2,1,0,1,2,3,4]
+--
 tail' :: Stream a -> Stream a
 tail' (Stream _ xs) = xs
 
+-- | Merges two streams into one using convertion
+-- similar to zipWith
 mix :: (a -> b -> c) -> Stream a -> Stream b -> Stream c
 mix f (Stream x xs) (Stream y ys) = Stream (f x y) (mix f xs ys)
+
+-- | Gives first element of stream
+curr :: Stream a -> a 
+curr (Stream x _) = x
+
+-- | Makes stream from one monoid value 
+single :: Monoid m => m -> Stream m
+single x = fromList mempty [x]
+
 
 -- | Returns infinite stream of natural numbers (excluding zero)
 --

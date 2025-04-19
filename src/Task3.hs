@@ -5,6 +5,7 @@ module Task3 where
 
 import Task2 hiding (nats, primes, fibs)
 import Data.Ratio (Ratio)
+import GHC.Real (numerator)
 
 -- | Power series represented as infinite stream of coefficients
 -- 
@@ -53,8 +54,18 @@ instance Num a => Num (Series a) where
     negate (Series xs) = Series (negate <$> xs)
     fromInteger n = Series (fromList 0 [fromInteger n])
 
+instance Fractional a => Fractional (Series a) where
+    fromRational q = Series (fromList 0 [fromRational q]) 
+    (Series (Stream a as)) / l@(Series (Stream b bs)) = 
+        fromFractional q + shiftRight ((Series as - Series mul) / l)
+        where q   = a / b
+              mul = (*) q <$> bs 
+
 x :: Num a => Series a
 x =  Series (fromList 0 [0, 1])
+
+fromFractional :: Fractional a => a -> Series a
+fromFractional q = Series (fromList 0 [q])
 
 fromNumber :: Num a => a -> Series a
 fromNumber n = Series (fromList 0 [n])
@@ -91,7 +102,7 @@ infixl 7 *:
 -- [2,3,0,0,0,0,0,0,0,0]
 --
 gen :: Series (Ratio Integer) -> Stream Integer
-gen = error "TODO: define gen"
+gen (Series xs) = numerator <$> xs
 
 -- | Returns infinite stream of ones
 --
@@ -101,7 +112,7 @@ gen = error "TODO: define gen"
 -- [1,1,1,1,1,1,1,1,1,1]
 --
 ones :: Stream Integer
-ones = error "TODO: define ones"
+ones = gen (1 / (1 - x)) 
 
 -- | Returns infinite stream of natural numbers (excluding zero)
 --
@@ -111,7 +122,14 @@ ones = error "TODO: define ones"
 -- [1,2,3,4,5,6,7,8,9,10]
 --
 nats :: Stream Integer
-nats = error "TODO: define nats (Task3)"
+nats = gen (1 / ((1 - x) * (1 - x)))
+
+-- assume f(x) = 1 + 2x + 3x + ...
+-- we can notice that (x) * x + ones = f(x) 
+-- (x - 1) * f(x) + (1 / (1 - x)) = 0 
+-- (x - 1) * f(x) = 1 / (x - 1)
+-- f(x) = 1 /(1 - x)^2
+
 
 -- | Returns infinite stream of fibonacci numbers (starting with zero)
 --
@@ -121,5 +139,4 @@ nats = error "TODO: define nats (Task3)"
 -- [0,1,1,2,3,5,8,13,21,34]
 --
 fibs :: Stream Integer
-fibs = error "TODO: define fibs (Task3)"
-
+fibs = gen (x / (1 - x - x*x)) 
